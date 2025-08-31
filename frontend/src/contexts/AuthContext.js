@@ -12,127 +12,132 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
   const [token, setToken] = useState(localStorage.getItem('token'));
-  const [skipProfileCheck, setSkipProfileCheck] = useState(false); // NEW
+  const [loading, setLoading] = useState(true);
 
-  
   useEffect(() => {
-    if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    } else {
-      delete axios.defaults.headers.common['Authorization'];
-    }
-  }, [token]);
-
-  
-  useEffect(() => {
-    const checkAuth = async () => {
-      if (token) {
-        if (skipProfileCheck) {
-          setSkipProfileCheck(false); 
-          setLoading(false);
-          return;
-        }
+    const initializeAuth = async () => {
+      const storedToken = localStorage.getItem('token');
+      
+      if (storedToken) {
         try {
-          const response = await axios.get('http://localhost:5000/api/auth/profile');
-          setUser(response.data);
-        } catch (error) {
-          console.error('Auth check failed:', error);
+          // Set default headers for all requests
+          axios.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
           
-          if (user) logout();
+          // Verify token and get user data
+          const response = await axios.get('http://localhost:5000/api/auth/profile');
+          setCurrentUser(response.data);
+          setToken(storedToken);
+        } catch (error) {
+          console.error('Token validation failed:', error);
+          // Clear invalid token
+          localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
         }
       }
       setLoading(false);
     };
 
-    checkAuth();
-  }, [token]);
+    initializeAuth();
+  }, []);
 
-  const login = async (email, password) => {
+  const login = async (userToken, userData) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', {
-        email,
-        password
-      });
-
-      const { token: newToken, user: userData } = response.data;
+      // Store token
+      localStorage.setItem('token', userToken);
+      setToken(userToken);
       
-      setToken(newToken);
-      setUser(userData);
-      localStorage.setItem('token', newToken);
-      setSkipProfileCheck(true); 
+      // Set default headers for all requests
+      axios.defaults.headers.common['Authorization'] = `Bearer ${userToken}`;
       
-      return { success: true, user: userData };
+      // Set user data
+      setCurrentUser(userData);
+      
+      return { success: true };
     } catch (error) {
       console.error('Login error:', error);
-      const errorData = error.response?.data;
-      return { 
-        success: false, 
-        error: {
-          message: errorData?.message || 'Login failed',
-          details: errorData?.details || errorData?.error || 'An unexpected error occurred'
-        }
-      };
-    }
-  };
-
-  const register = async (userData) => {
-    try {
-      const response = await axios.post('http://localhost:5000/api/auth/register', userData);
-      
-      const { token: newToken, user: newUser } = response.data;
-      
-      setToken(newToken);
-      setUser(newUser);
-      localStorage.setItem('token', newToken);
-      setSkipProfileCheck(true); 
-      
-      return { success: true, user: newUser };
-    } catch (error) {
-      console.error('Registration error:', error);
-      const errorData = error.response?.data;
-      return { 
-        success: false, 
-        error: {
-          message: errorData?.message || 'Registration failed',
-          details: errorData?.details || errorData?.error || 'An unexpected error occurred'
-        }
-      };
+      return { success: false, error: error.message };
     }
   };
 
   const logout = () => {
-    setUser(null);
-    setToken(null);
+    // Clear token and user data
     localStorage.removeItem('token');
+    setToken(null);
+    setCurrentUser(null);
+    
+    // Remove default headers
     delete axios.defaults.headers.common['Authorization'];
+  };
+
+  const updateUser = (updatedUser) => {
+    setCurrentUser(updatedUser);
+  };
+
+  const switchRole = async (newRole) => {
+    try {
+      const response = await axios.put('http://localhost:5000/api/auth/switch-role', {
+        newRole
+      });
+      
+      if (response.data.currentRole) {
+        setCurrentUser(prev => ({
+          ...prev,
+          currentRole: response.data.currentRole
+        }));
+        return { success: true, newRole: response.data.currentRole };
+      }
+    } catch (error) {
+      console.error('Role switch error:', error);
+      return { success: false, error: error.message };
+    }
   };
 
   const updateProfile = async (profileData) => {
     try {
       const response = await axios.put('http://localhost:5000/api/auth/profile', profileData);
-      setUser(response.data.user);
-      return { success: true, user: response.data.user };
+      
+      if (response.data.user) {
+        setCurrentUser(response.data.user);
+        return { success: true, user: response.data.user };
+      }
     } catch (error) {
       console.error('Profile update error:', error);
-      return { 
-        success: false, 
-        error: error.response?.data?.message || 'Profile update failed' 
-      };
+      return { success: false, error: error.message };
     }
   };
 
+  const updatePreferences = async (preferences) => {
+    try {
+      const response = await axios.put('http://localhost:5000/api/auth/preferences', preferences);
+      
+      if (response.data.preferences) {
+        setCurrentUser(prev => ({
+          ...prev,
+          preferences: response.data.preferences
+        }));
+        return { success: true, preferences: response.data.preferences };
+      }
+    } catch (error) {
+      console.error('Preferences update error:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  const isAuthenticated = !!token && !!currentUser;
+
   const value = {
-    user,
+    currentUser,
     token,
     loading,
     login,
-    register,
     logout,
+    updateUser,
+    switchRole,
     updateProfile,
-    isAuthenticated: !!user
+    updatePreferences,
+    isAuthenticated
   };
 
   return (

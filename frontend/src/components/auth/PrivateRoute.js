@@ -4,16 +4,11 @@ import { useAuth } from '../../contexts/AuthContext';
 import { CircularProgress, Box } from '@mui/material';
 
 const PrivateRoute = ({ children, allowedRoles = [] }) => {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { currentUser, loading, isAuthenticated } = useAuth();
 
   if (loading) {
     return (
-      <Box 
-        display="flex" 
-        justifyContent="center" 
-        alignItems="center" 
-        minHeight="100vh"
-      >
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
         <CircularProgress />
       </Box>
     );
@@ -23,10 +18,9 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
     return <Navigate to="/login" replace />;
   }
 
-  
-  if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
-   
-    switch (user.role) {
+  if (allowedRoles.length > 0 && !allowedRoles.includes(currentUser.currentRole)) {
+    // Redirect to appropriate dashboard based on user's role
+    switch (currentUser.currentRole) {
       case 'student':
         return <Navigate to="/student" replace />;
       case 'organizer':
@@ -34,7 +28,7 @@ const PrivateRoute = ({ children, allowedRoles = [] }) => {
       case 'admin':
         return <Navigate to="/admin" replace />;
       default:
-        return <Navigate to="/login" replace />;
+        return <Navigate to="/student" replace />;
     }
   }
 

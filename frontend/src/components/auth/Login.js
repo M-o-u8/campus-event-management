@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import {
   Container,
   Paper,
@@ -9,185 +7,241 @@ import {
   Typography,
   Box,
   Alert,
+  Link,
   CircularProgress,
-  Grid
+  IconButton,
+  InputAdornment
 } from '@mui/material';
-import { School, Login as LoginIcon } from '@mui/icons-material';
+import {
+  Visibility,
+  VisibilityOff,
+  Email,
+  Lock
+} from '@mui/icons-material';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
 
 const Login = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
-  const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   
-  const { login } = useAuth();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    if (error) setError('');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
+    setError('');
 
-    const result = await login(formData.email, formData.password);
-    
-    if (result.success) {
+    try {
+      console.log('Attempting login with:', formData.email);
       
-      switch (result.user.role) {
-        case 'student':
-          navigate('/student');
-          break;
-        case 'organizer':
-          navigate('/organizer');
-          break;
-        case 'admin':
-          navigate('/admin');
-          break;
-        default:
-          navigate('/student');
+      const response = await axios.post('http://localhost:5000/api/auth/login', formData);
+      console.log('Login response:', response.data);
+      
+      if (response.data.token && response.data.user) {
+        // Call the login function from AuthContext
+        const loginResult = await login(response.data.token, response.data.user);
+        console.log('Login result:', loginResult);
+        
+        if (loginResult.success) {
+          // Redirect based on user's current role
+          const currentRole = response.data.user.currentRole || 'student';
+          console.log('Redirecting to role:', currentRole);
+          
+          switch (currentRole) {
+            case 'student':
+              navigate('/student');
+              break;
+            case 'organizer':
+              navigate('/organizer');
+              break;
+            case 'admin':
+              navigate('/admin');
+              break;
+            default:
+              navigate('/student');
+          }
+        } else {
+          setError(loginResult.error || 'Login failed');
+        }
+      } else {
+        setError('Invalid response from server');
       }
-    } else {
-     
-      const errorMessage = result.error?.details || result.error || 'Login failed';
-      setError(errorMessage);
+    } catch (error) {
+      console.error('Login error:', error);
+      
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else if (error.code === 'ECONNREFUSED') {
+        setError('Cannot connect to server. Please check if the backend is running.');
+      } else {
+        setError('Login failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
   };
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 8,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            borderRadius: 3,
-            width: '100%',
-          }}
-        >
-          <School sx={{ fontSize: 60, mb: 2, color: 'white' }} />
-          <Typography component="h1" variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>
-            Campus Event Management
-          </Typography>
-          <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
-            Welcome Back!
-          </Typography>
-        </Paper>
-
-        <Paper
+    <Container maxWidth="sm">
+      <Box sx={{ 
+        mt: 4, 
+        mb: 4,
+        minHeight: '80vh',
+        display: 'flex',
+        alignItems: 'center'
+      }}>
+        <Paper 
           elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
+          sx={{ 
+            p: 4, 
             width: '100%',
-            mt: 2,
-            borderRadius: 3,
+            borderRadius: 2
           }}
         >
-          <Typography component="h2" variant="h5" sx={{ mb: 3, color: '#1976d2' }}>
-            Sign In
-          </Typography>
+          {/* Header */}
+          <Box sx={{ textAlign: 'center', mb: 4 }}>
+            <Typography 
+              variant="h3" 
+              component="h1" 
+              gutterBottom
+              sx={{ fontWeight: 700, mb: 1 }}
+            >
+              Welcome Back
+            </Typography>
+            <Typography 
+              variant="body1" 
+              color="text.secondary" 
+              sx={{ mb: 2 }}
+            >
+              Sign in to your account to continue
+            </Typography>
+          </Box>
 
+          {/* Error Alert */}
           {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <Alert 
+              severity="error" 
+              sx={{ mb: 3, borderRadius: 2 }}
+            >
               {error}
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
+          {/* Login Form */}
+          <form onSubmit={handleSubmit}>
             <TextField
-              margin="normal"
-              required
               fullWidth
-              id="email"
               label="Email Address"
               name="email"
-              autoComplete="email"
-              autoFocus
+              type="email"
               value={formData.email}
               onChange={handleChange}
-              sx={{ mb: 2 }}
-            />
-            <TextField
               margin="normal"
               required
+              autoComplete="email"
+              autoFocus
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Email color="action" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            
+            <TextField
               fullWidth
-              name="password"
               label="Password"
-              type="password"
-              id="password"
-              autoComplete="current-password"
+              name="password"
+              type={showPassword ? 'text' : 'password'}
               value={formData.password}
               onChange={handleChange}
-              sx={{ mb: 3 }}
+              margin="normal"
+              required
+              autoComplete="current-password"
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <Lock color="action" />
+                  </InputAdornment>
+                ),
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={togglePasswordVisibility}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
+
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              disabled={loading}
               sx={{
-                mt: 2,
+                mt: 3,
                 mb: 2,
                 py: 1.5,
                 fontSize: '1.1rem',
-                background: 'linear-gradient(45deg, #2196F3 30%, #21CBF3 90%)',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #1976D2 30%, #1CB5E0 90%)',
-                }
+                fontWeight: 600
               }}
+              disabled={loading}
             >
               {loading ? (
                 <CircularProgress size={24} color="inherit" />
               ) : (
-                <>
-                  <LoginIcon sx={{ mr: 1 }} />
-                  Sign In
-                </>
+                'Sign In'
               )}
             </Button>
-          </Box>
 
-          <Grid container justifyContent="center" sx={{ mt: 2 }}>
-            <Grid item>
+            {/* Registration Link */}
+            <Box sx={{ textAlign: 'center' }}>
               <Typography variant="body2" color="text.secondary">
                 Don't have an account?{' '}
                 <Link 
+                  component={RouterLink} 
                   to="/register" 
-                  style={{ 
-                    color: '#2196f3', 
+                  variant="body2"
+                  sx={{ 
+                    fontWeight: 600,
                     textDecoration: 'none',
-                    fontWeight: 'bold'
+                    '&:hover': {
+                      textDecoration: 'underline'
+                    }
                   }}
                 >
-                  Sign Up
+                  Sign up here
                 </Link>
               </Typography>
-            </Grid>
-          </Grid>
+            </Box>
+          </form>
         </Paper>
       </Box>
     </Container>

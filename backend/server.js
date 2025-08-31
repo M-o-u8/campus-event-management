@@ -5,6 +5,10 @@ const dotenv = require('dotenv');
 const authRoutes = require('./routes/auth');
 const eventRoutes = require('./routes/events');
 const userRoutes = require('./routes/users');
+const notificationRoutes = require('./routes/notifications');
+const resourceRoutes = require('./routes/resources');
+const gamificationRoutes = require('./routes/gamification');
+const recommendationRoutes = require('./routes/recommendations');
 
 dotenv.config();
 
@@ -17,13 +21,21 @@ app.use(express.urlencoded({ extended: true }));
 
 
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/campus-events')
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+.then(() => console.log('✅ Connected to MongoDB'))
+.catch(err => {
+  console.error('❌ MongoDB connection error:', err);
+  console.log('⚠️  Server will start without database connection');
+  console.log('💡 Make sure MongoDB is running on your system');
+});
 
 
 app.use('/api/auth', authRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/resources', resourceRoutes);
+app.use('/api/gamification', gamificationRoutes);
+app.use('/api/recommendations', recommendationRoutes);
 
 
 app.get('/', (req, res) => {

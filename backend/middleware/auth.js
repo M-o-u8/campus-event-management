@@ -39,7 +39,9 @@ const requireRole = (roles) => {
             return res.status(401).json({ message: 'Authentication required' });
         }
 
-        if (!roles.includes(req.user.role)) {
+        // Check if user has any of the required roles
+        const hasRole = req.user.roles && req.user.roles.some(role => roles.includes(role));
+        if (!hasRole) {
             return res.status(403).json({ 
                 message: 'Access denied. Insufficient permissions.' 
             });

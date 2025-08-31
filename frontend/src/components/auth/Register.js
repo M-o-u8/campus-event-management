@@ -1,6 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
 import {
   Container,
   Paper,
@@ -9,14 +7,21 @@ import {
   Typography,
   Box,
   Alert,
+  Link,
   CircularProgress,
-  Grid,
   FormControl,
   InputLabel,
   Select,
-  MenuItem
+  MenuItem,
+  Chip,
+  FormHelperText,
+  OutlinedInput,
+  Checkbox,
+  ListItemText
 } from '@mui/material';
-import { School, PersonAdd } from '@mui/icons-material';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import axios from 'axios';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -24,258 +29,226 @@ const Register = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student'
+    roles: ['student'] // Changed from single role to multiple roles
   });
-  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  
-  const { register } = useAuth();
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const availableRoles = [
+    { value: 'student', label: 'Student', description: 'Register for events, give feedback, get certificates' },
+    { value: 'organizer', label: 'Event Organizer', description: 'Create and manage events, upload media, track attendance' },
+    { value: 'admin', label: 'Administrator', description: 'Approve events, manage users, view analytics' }
+  ];
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+  };
+
+  const handleRoleChange = (event) => {
+    const { value } = event.target;
+    setFormData({
+      ...formData,
+      roles: typeof value === 'string' ? value.split(',') : value
+    });
+  };
+
+  const validateForm = () => {
+    if (formData.password !== formData.confirmPassword) {
+      setError('Passwords do not match');
+      return false;
+    }
+    if (formData.password.length < 6) {
+      setError('Password must be at least 6 characters long');
+      return false;
+    }
+    if (formData.roles.length === 0) {
+      setError('Please select at least one role');
+      return false;
+    }
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
 
-   
-    if (formData.password !== formData.confirmPassword) {
-      setError('Passwords do not match');
+    if (!validateForm()) {
+      setLoading(false);
       return;
     }
 
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      return;
-    }
-
-    
-    if (!formData.email || !formData.email.includes('@') || !formData.email.includes('.')) {
-      setError('Please enter a valid email address (must contain @ and .)');
-      return;
-    }
-
-    setLoading(true);
-
-    const userData = {
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      role: formData.role
-    };
-
-    const result = await register(userData);
-    console.log('Registration result:', result); 
-    
-    if (result.success) {
-      console.log('Redirecting to dashboard for role:', result.user.role); 
+    try {
+      // For now, we'll use the first selected role as the primary role
+      // The backend will store all roles and set the first one as currentRole
+      const primaryRole = formData.roles[0];
       
-      switch (result.user.role) {
-        case 'student':
-          navigate('/student');
-          break;
-        case 'organizer':
-          navigate('/organizer');
-          break;
-        case 'admin':
-          navigate('/admin');
-          break;
-        default:
-          navigate('/student');
+      const response = await axios.post('http://localhost:5000/api/auth/register', {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: primaryRole // Backend will handle multiple roles
+      });
+      
+      if (response.data.token) {
+        await login(response.data.token, response.data.user);
+        
+        // Redirect based on user's primary role
+        switch (primaryRole) {
+          case 'student':
+            navigate('/student');
+            break;
+          case 'organizer':
+            navigate('/organizer');
+            break;
+          case 'admin':
+            navigate('/admin');
+            break;
+          default:
+            navigate('/student');
+        }
       }
-    } else {
-      
-      const errorMessage = result.error?.details || result.error || 'Registration failed';
-      setError(errorMessage);
+    } catch (error) {
+      console.error('Registration error:', error);
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else if (error.response?.data?.error) {
+        setError(error.response.data.error);
+      } else {
+        setError('Registration failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   return (
-    <Container component="main" maxWidth="sm">
-      <Box
-        sx={{
-          marginTop: 4,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-        }}
-      >
-        <Paper
-          elevation={6}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-            color: 'white',
-            borderRadius: 3,
-            width: '100%',
-          }}
-        >
-          <School sx={{ fontSize: 60, mb: 2, color: 'white' }} />
-          <Typography component="h1" variant="h4" sx={{ mb: 3, fontWeight: 'bold' }}>
-            Campus Event Management
-          </Typography>
-          <Typography variant="h6" sx={{ mb: 4, opacity: 0.9 }}>
-            Join Our Community!
-          </Typography>
-        </Paper>
-
-        <Paper
-          elevation={3}
-          sx={{
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            width: '100%',
-            mt: 2,
-            borderRadius: 3,
-          }}
-        >
-          <Typography component="h2" variant="h5" sx={{ mb: 2, color: '#1976d2' }}>
+    <Container maxWidth="sm">
+      <Box sx={{ mt: 4, mb: 4 }}>
+        <Paper elevation={3} sx={{ p: 4 }}>
+          <Typography variant="h4" component="h1" gutterBottom align="center">
             Create Account
           </Typography>
-          
-          <Alert severity="info" sx={{ width: '100%', mb: 3 }}>
-            <Typography variant="body2">
-              <strong>Simple Registration:</strong> Just enter your basic information to get started.
-            </Typography>
-          </Alert>
+          <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 3 }}>
+            Join our campus event management platform
+          </Typography>
 
           {error && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
-              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
-                Registration Error:
-              </Typography>
-              <Typography variant="body2">
-                {error}
-              </Typography>
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
             </Alert>
           )}
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  id="name"
-                  label="Full Name"
-                  name="name"
-                  autoComplete="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  id="email"
-                  label="Email Address"
-                  name="email"
-                  autoComplete="email"
-                  placeholder="e.g., user@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <FormControl fullWidth required>
-                  <InputLabel id="role-label">Role</InputLabel>
-                  <Select
-                    labelId="role-label"
-                    id="role"
-                    name="role"
-                    value={formData.role}
-                    label="Role"
-                    onChange={handleChange}
-                  >
-                    <MenuItem value="student">Student</MenuItem>
-                    <MenuItem value="organizer">Organizer</MenuItem>
-                    <MenuItem value="admin">Admin</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  name="password"
-                  label="Password"
-                  type="password"
-                  id="password"
-                  autoComplete="new-password"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  required
-                  fullWidth
-                  name="confirmPassword"
-                  label="Confirm Password"
-                  type="password"
-                  id="confirmPassword"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                />
-              </Grid>
-            </Grid>
+          <form onSubmit={handleSubmit}>
+            <TextField
+              fullWidth
+              label="Full Name"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              margin="normal"
+              required
+              autoComplete="name"
+              autoFocus
+            />
+            <TextField
+              fullWidth
+              label="Email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              margin="normal"
+              required
+              autoComplete="email"
+            />
+            <TextField
+              fullWidth
+              label="Password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              margin="normal"
+              required
+              autoComplete="new-password"
+              helperText="Password must be at least 6 characters long"
+            />
+            <TextField
+              fullWidth
+              label="Confirm Password"
+              name="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              margin="normal"
+              required
+              autoComplete="new-password"
+            />
+            
+            {/* Enhanced Role Selection */}
+            <FormControl fullWidth margin="normal" required>
+              <InputLabel>Select Roles</InputLabel>
+              <Select
+                multiple
+                name="roles"
+                value={formData.roles}
+                onChange={handleRoleChange}
+                input={<OutlinedInput label="Select Roles" />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {selected.map((value) => (
+                      <Chip 
+                        key={value} 
+                        label={availableRoles.find(r => r.value === value)?.label || value}
+                        color={value === 'admin' ? 'error' : value === 'organizer' ? 'warning' : 'primary'}
+                        size="small"
+                      />
+                    ))}
+                  </Box>
+                )}
+              >
+                {availableRoles.map((role) => (
+                  <MenuItem key={role.value} value={role.value}>
+                    <Checkbox checked={formData.roles.indexOf(role.value) > -1} />
+                    <ListItemText 
+                      primary={role.label}
+                      secondary={role.description}
+                    />
+                  </MenuItem>
+                ))}
+              </Select>
+              <FormHelperText>
+                You can select multiple roles. Your primary role will be used for initial dashboard access.
+              </FormHelperText>
+            </FormControl>
+
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              size="large"
+              sx={{ mt: 3, mb: 2 }}
               disabled={loading}
-              sx={{
-                mt: 3,
-                mb: 2,
-                py: 1.5,
-                fontSize: '1.1rem',
-                background: 'linear-gradient(45deg, #4CAF50 30%, #45a049 90%)',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #45a049 30%, #3d8b40 90%)',
-                }
-              }}
             >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                <>
-                  <PersonAdd sx={{ mr: 1 }} />
-                  Sign Up
-                </>
-              )}
+              {loading ? <CircularProgress size={24} /> : 'Create Account'}
             </Button>
-          </Box>
+          </form>
 
-          <Grid container justifyContent="center" sx={{ mt: 2 }}>
-            <Grid item>
-              <Typography variant="body2" color="text.secondary">
-                Already have an account?{' '}
-                <Link 
-                  to="/login" 
-                  style={{ 
-                    color: '#2196f3', 
-                    textDecoration: 'none',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  Sign In
-                </Link>
-              </Typography>
-            </Grid>
-          </Grid>
+          <Box sx={{ textAlign: 'center', mt: 2 }}>
+            <Typography variant="body2">
+              Already have an account?{' '}
+              <Link component={RouterLink} to="/login" variant="body2">
+                Sign in here
+              </Link>
+            </Typography>
+          </Box>
         </Paper>
       </Box>
     </Container>
