@@ -1,36 +1,36 @@
-# 🎓 Campus Event Management System
+#  Campus Event Management System
 
 A comprehensive web application for managing campus events with role-based access control, real-time features, and advanced analytics.
 
-## ✨ Features
+##  Features
 
-### 🔐 User Authentication & Role Management
+###  User Authentication & Role Management
 - **Multi-role System**: Student, Organizer, and Admin roles
 - **Secure Login/Registration**: JWT-based authentication
 - **Role-based Access Control**: Different dashboards and permissions for each role
 - **Profile Management**: User profiles with customizable settings
 
-### 📅 Event Management
+###  Event Management
 - **Event Creation**: Organizers can create events with comprehensive details
 - **Event Approval Workflow**: Admin approval system for events
 - **Event Categories**: Academic, Social, Sports, Cultural, Technical, Workshop, Other
 - **Event Tags**: Flexible tagging system for better organization
 - **Recurring Events**: Support for daily, weekly, monthly, and yearly recurring events
 
-### 🎫 Registration & Attendance
+###  Registration & Attendance
 - **Event Registration**: Students can register for events
 - **Attendance Tracking**: QR code-based attendance system
 - **Waiting List Management**: Automatic waiting list when events are full
 - **Ticket Management**: Different ticket types (Regular, VIP, Student, Early Bird)
 - **Payment Integration**: Built-in payment system with wallet functionality
 
-### 📍 Venue & Resource Management
+###  Venue & Resource Management
 - **Venue Booking**: Real-time venue availability checking
 - **Event Clash Detection**: Automatic conflict detection for venues
 - **Resource Management**: Equipment and resource allocation
 - **Google Maps Integration**: Venue location with interactive maps
 
-### 📊 Analytics & Reporting
+###  Analytics & Reporting
 - **Comprehensive Dashboard**: Real-time statistics and metrics
 - **Event Analytics**: Attendance rates, popularity metrics, feedback analysis
 - **Category Distribution**: Visual charts for event categories
@@ -38,37 +38,37 @@ A comprehensive web application for managing campus events with role-based acces
 - **Export Functionality**: CSV and JSON report exports
 - **Performance Metrics**: Top-performing events and organizers
 
-### 🖼️ Media Management
+###  Media Management
 - **Photo & Video Uploads**: Support for multiple media types
 - **Event Gallery**: Organized media display for each event
 - **Cloud Storage**: Cloudinary integration for media storage
 - **Media Preview**: Lightbox-style media viewing
 
-### 🔔 Notifications & Communication
+###  Notifications & Communication
 - **Email Notifications**: Automated email reminders and updates
 - **In-app Notifications**: Real-time notification system
 - **Event Reminders**: Automated reminders before events
 - **Status Updates**: Notifications for event changes and approvals
 
-### 📱 Mobile & Accessibility
+###  Mobile & Accessibility
 - **Responsive Design**: Mobile-first responsive interface
 - **Touch-friendly**: Optimized for mobile devices
 - **Progressive Web App**: PWA capabilities for mobile users
 
-### 🔍 Search & Discovery
+###  Search & Discovery
 - **Advanced Search**: Search by title, category, date, venue
 - **Smart Filtering**: Multiple filter options for events
 - **Calendar View**: Interactive calendar with event display
 - **Event Discovery**: Personalized event recommendations
 
-### 📈 Advanced Features
+###  Advanced Features
 - **QR Code Generation**: Unique QR codes for each registration
 - **QR Code Scanning**: Mobile attendance tracking
 - **Google Calendar Export**: ICS file export for calendar integration
 - **Feedback System**: Post-event rating and review system
 - **Community Features**: User interaction and engagement tools
 
-## 🚀 Tech Stack
+##  Tech Stack
 
 ### Backend
 - **Node.js** with Express.js
@@ -90,7 +90,7 @@ A comprehensive web application for managing campus events with role-based acces
 - **React Dropzone** for file uploads
 - **Date-fns** for date manipulation
 
-## 🛠️ Installation & Setup
+##  Installation & Setup
 
 ### Prerequisites
 - Node.js (v16 or higher)
@@ -129,7 +129,7 @@ EMAIL_PASS=your_email_password
 FRONTEND_URL=http://localhost:3000
 ```
 
-## 📱 Usage Guide
+##  Usage Guide
 
 ### For Students
 1. **Register/Login**: Create an account or sign in
@@ -155,7 +155,7 @@ FRONTEND_URL=http://localhost:3000
 5. **Venue Management**: Monitor venue conflicts and availability
 6. **Content Moderation**: Moderate event content and media
 
-## 🔧 API Endpoints
+##  API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - User registration
@@ -181,7 +181,7 @@ FRONTEND_URL=http://localhost:3000
 - `GET /api/events/:id/media` - Get event media
 - `DELETE /api/events/:id/media/:mediaId` - Delete media
 
-## 🎨 UI Components
+##  UI Components
 
 ### Core Components
 - **EventCalendar**: Interactive calendar with event display
@@ -197,7 +197,7 @@ FRONTEND_URL=http://localhost:3000
 - **OrganizerDashboard**: Event creation and management
 - **AdminDashboard**: System administration and analytics
 
-## 🔒 Security Features
+##  Security Features
 
 - **JWT Authentication**: Secure token-based authentication
 - **Role-based Access Control**: Granular permission system
@@ -206,7 +206,7 @@ FRONTEND_URL=http://localhost:3000
 - **CORS Protection**: Cross-origin resource sharing security
 - **Helmet Security**: Security headers and protection
 
-## 📊 Performance Features
+##  Performance Features
 
 - **Database Indexing**: Optimized database queries
 - **Image Optimization**: Automatic image compression and resizing
@@ -214,7 +214,7 @@ FRONTEND_URL=http://localhost:3000
 - **Caching**: Smart caching for frequently accessed data
 - **Compression**: Response compression for faster loading
 
-## 🚀 Deployment
+##  Deployment
 
 ### Backend Deployment
 ```bash
@@ -233,7 +233,7 @@ npm run build
 # Deploy build folder to your hosting service
 ```
 
-## 🤝 Contributing
+##  Contributing
 
 1. Fork the repository
 2. Create a feature branch
@@ -241,18 +241,18 @@ npm run build
 4. Add tests if applicable
 5. Submit a pull request
 
-## 📄 License
+##  License
 
 This project is licensed under the MIT License.
 
-## 🆘 Support
+##  Support
 
 For support and questions:
 - Create an issue in the repository
 - Check the documentation
 - Contact the development team
 
-## 🔮 Future Enhancements
+##  Future Enhancements
 
 - **Mobile App**: Native mobile applications
 - **AI Integration**: Smart event recommendations
@@ -264,5 +264,5 @@ For support and questions:
 
 ---
 
-**Built with ❤️ for better campus event management**
+
 
